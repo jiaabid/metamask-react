@@ -240,10 +240,10 @@ hr {
 }
 
 .card {
-    width: 80%;
+    /* width: 80%; */
     border-radius: 10px;
     padding: 15px;
-    margin: 0 20px;
+    /* margin: 0 20px; */
     border: 1px solid #fff;
     transition: all 0.4s cubic-bezier(0.075, 0.82, 0.165, 1);
     background-color: rgba(90, 75, 124, .5);
@@ -265,8 +265,8 @@ hr {
 }
 
 .cardsDiv .card {
-    width: 25%;
-    margin: 20px 20px 0 0;
+    width: 300px;
+    margin: 20px 10px  0;
 }
 
 .cardImg {
@@ -383,12 +383,13 @@ i {
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        align-items: center;
         margin: 0;
         padding: 0;
     }
 
     .cardsDiv .card {
-        width: 100%;
+        width: 400px;
         margin: 20px 0 0;
 
     }
@@ -418,3 +419,8 @@ i {
     }
 
 }
+/* @media (min-width:2000px){
+    .cardsDiv{
+        justify-content: space-around;
+    }
+} */

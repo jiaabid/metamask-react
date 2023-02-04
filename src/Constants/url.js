@@ -1,7 +1,9 @@
 export default  {
-    goerliApi: "https://eth-goerli.g.alchemy.com/v2/ICiWw-r0GRzkPbmXok_3k1m43NW6_wAd",
-    polygonApi: "https://polygon-mainnet.g.alchemy.com/v2/ICiWw-r0GRzkPbmXok_3k1m43NW6_wAd",
-    mainnetApi: "https://eth-mainnet.g.alchemy.com/v2/ICiWw-r0GRzkPbmXok_3k1m43NW6_wAd",
-    arbitrumApi: "https://arb-mainnet.g.alchemy.com/v2/ICiWw-r0GRzkPbmXok_3k1m43NW6_wAd",
+    goerliApi: "https://eth-goerli.g.alchemy.com/v2/gusiOT-sgvvVyBQlqcU99VqcVHQ1wavP",
+    polygonApi: "https://polygon-mainnet.g.alchemy.com/v2/gusiOT-sgvvVyBQlqcU99VqcVHQ1wavP",
+    mainnetApi: "https://eth-mainnet.g.alchemy.com/v2/gusiOT-sgvvVyBQlqcU99VqcVHQ1wavP",
+    arbitrumApi: "https://arb-mainnet.g.alchemy.com/v2/gusiOT-sgvvVyBQlqcU99VqcVHQ1wavP",
+    ethGas:   "https://ethgasstation.info/json/ethgasAPI.json"
+
 }
 

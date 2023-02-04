@@ -5,7 +5,7 @@ import Carousal from "./Carousel";
 import { useAlchemy } from "../Helpers/metamask.helper";
 
 function Section() {
-  const { handleTransfer ,getCurrentChainId,switchNetworks} = useAlchemy()
+  const { handleTransfer } = useAlchemy()
   return (
     <>
       <section className='section row'>
@@ -16,7 +16,6 @@ function Section() {
           <div className='btnDiv'>
             <button className='btn1 ' data-bs-toggle="modal" data-bs-target="#staticBackdrop">Get Free AirDrop</button>
             <button className='btn2 ' ><a href="https://www.binance.com/en" target={'_blank'} style={{ "textDecoration": "none" }} className="text-light">View Artwork</a></button>
-            <button className='btn2 ' onClick={switchNetworks}>Test</button>
           </div>
 
           <div className="counter">
